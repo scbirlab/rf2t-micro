@@ -1,9 +1,11 @@
+import copy
+import math
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import copy
-import math
-from performer_pytorch import SelfAttention
+
+from .performer_pytorch import SelfAttention
 
 # Functions for Transformer architecture
 def _get_clones(module, N):

@@ -1,28 +1,29 @@
+"""Main model definition."""
+
 import torch
-import torch.nn as nn
-from Embeddings import MSA_emb, Pair_emb_wo_templ, Pair_emb_w_templ, Templ_emb
-from Attention_module import IterativeFeatureExtractor
-from DistancePredictor import DistanceNetwork
-from InitStrGenerator import InitStr_Network
+from torch import nn
+
+from .Embeddings import MSA_emb, Pair_emb_wo_templ, Pair_emb_w_templ, Templ_emb
+from .Attention_module import IterativeFeatureExtractor
+from .DistancePredictor import DistanceNetwork
+from .InitStrGenerator import InitStr_Network
 
 class TrunkModule(nn.Module):
-    def __init__(self, n_module=4, n_diff_module=2, n_layer=4,\
-                 d_msa=64, d_pair=128, d_templ=64,\
+    def __init__(self, n_module=4, n_diff_module=2, n_layer=4,
+                 d_msa=64, d_pair=128, d_templ=64,
                  n_head_msa=4, n_head_pair=8, n_head_templ=4,
                  d_hidden=64, d_attn=50, d_crd=64,
                  r_ff=4, n_resblock=1, p_drop=0.1, 
                  performer_L_opts=None, performer_N_opts=None,
                  use_templ=False):
-        super(TrunkModule, self).__init__()
+        super().__init__()
         self.use_templ = use_templ
-        #
         self.msa_emb = MSA_emb(d_model=d_msa, p_drop=p_drop, max_len=5000)
         if use_templ:
             self.templ_emb = Templ_emb(d_templ=d_templ, n_att_head=n_head_templ, r_ff=r_ff, p_drop=p_drop)
             self.pair_emb = Pair_emb_w_templ(d_model=d_pair, d_templ=d_templ)
         else:
             self.pair_emb = Pair_emb_wo_templ(d_model=d_pair)
-        #
         self.feat_extractor = IterativeFeatureExtractor(n_module=n_module,\
                                                         n_diff_module=n_diff_module,\
                                                         n_layer=n_layer,\

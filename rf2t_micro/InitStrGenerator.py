@@ -4,7 +4,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from Transformer import Encoder, EncoderLayer
+
+from .Transformer import Encoder, EncoderLayer
 
 def get_seqsep(idx):
     '''

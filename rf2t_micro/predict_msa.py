@@ -1,17 +1,23 @@
-import sys, os
+"""Core predictor process."""
+
+from typing import Optional
+
+from collections import namedtuple
+import os
+import sys
 import time
+
 import numpy as np
 import torch
-import torch.nn as nn
-from torch.utils import data
-from parsers import parse_a3m
-from TrunkModel  import TrunkModule
-import util
-from collections import namedtuple
+from  torch import nn
+
+from .parsers import _A3M_ALPHABET
+from .TrunkModel  import TrunkModule
 
 script_dir = '/'.join(os.path.dirname(os.path.realpath(__file__)).split('/')[:-1])
+script_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)))
 
-MODEL_PARAM ={
+MODEL_PARAM = {
         "n_module"     : 12,
         "n_diff_module": 12,
         "n_layer"      : 1,
@@ -32,10 +38,16 @@ MODEL_PARAM ={
         }
 
 class Predictor():
+
+    """
     
-    def __init__(self, model_dir=None, use_cpu=False):
-        if model_dir == None:
-            self.model_dir = "%s/weights"%(script_dir)
+    """
+    
+    def __init__(self, 
+                 model_dir: Optional[str] = None, 
+                 use_cpu: bool = False):
+        if model_dir is None:
+            self.model_dir = f"{script_dir}/weights"
         else:
             self.model_dir = model_dir
         #
@@ -54,24 +66,27 @@ class Predictor():
             print ("ERROR: failed to load model")
             sys.exit()
 
-    def load_model(self, model_name):
-        chk_fn = "%s/%s.pt"%(self.model_dir, model_name)
+    def load_model(self, model_name: str):
+        chk_fn = f"{self.model_dir}/{model_name}.pt"
         if not os.path.exists(chk_fn):
             return False
         checkpoint = torch.load(chk_fn, map_location=self.device)
         self.model.load_state_dict(checkpoint['model_state_dict'], strict=True)
         return True
     
-    def predict(self, a3m_fn, npz_fn, L1):
-        msa = parse_a3m(a3m_fn)
-        N, L = msa.shape
+    def predict(self, 
+                msa: np.ndarray, 
+                chain_a_length: int) -> np.ndarray:
+
+        # msa = parse_a3m(paired_msa_file)
+        n_rows, n_cols = msa.shape
        
         self.model.eval()
         with torch.no_grad():
-            #
-            msa = torch.tensor(msa[:10000], device=self.device).long().view(1, -1, L)
-            idx_pdb = torch.arange(L, device=self.device).long().view(1, L)
-            idx_pdb[:,L1:] += 200 
+            msa = torch.tensor(msa[:10_000],  # take only first 10k rows 
+                               device=self.device).long().unsqueeze(0)
+            idx_pdb = torch.arange(n_cols, device=self.device).long().unsqueeze(0)
+            idx_pdb[:,chain_a_length:] += 200 
             seq = msa[:,0]
             #
             logit_s, _ = self.model(msa, seq, idx_pdb)
@@ -80,22 +95,6 @@ class Predictor():
             prob = self.active_fn(logit_s[0])
             prob = prob.permute(0,2,3,1).cpu().detach().numpy()
             # interchain contact prob
-            prob = np.sum(prob.reshape(L,L,-1)[:L1,L1:,:20], axis=-1).astype(np.float16)
-        
-        # store inter-chain contact prob only
-        np.savez_compressed(npz_fn, dist=prob)
-    
-
-if __name__ == "__main__":
-    import argparse
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-m", dest="model_dir", default="%s/weights"%(script_dir),
-                        help="Path to pre-trained network weights [%s/weights]"%script_dir)
-    parser.add_argument("-msa", required=True, help="Input paired MSA file")
-    parser.add_argument("-npz", required=True, help="output npz file name")
-    parser.add_argument("-L1", required=True, type=int, help="Length of first chain")
-    parser.add_argument("--cpu", dest='use_cpu', default=False, action='store_true')
-    args = parser.parse_args()
-
-    pred = Predictor(model_dir=args.model_dir, use_cpu=args.use_cpu)
-    pred.predict(args.msa, args.npz, args.L1)
+        prob = np.sum(prob.reshape(n_cols,n_cols,-1)[:chain_a_length,chain_a_length:,:(len(_A3M_ALPHABET) - 1)], 
+                      axis=-1)
+        return prob

@@ -5,14 +5,22 @@ import sys
 from argparse import ArgumentParser, FileType, Namespace
 from carabiner.cliutils import clicommand, CLIOption, CLICommand, CLIApp
 
+from .parsers import parse_a3m
+
 __version__ = '0.0.1'
 
 @clicommand(message="Making RosettaFold-2track prediction with the following parameters.")
 def _run_prediction(args: Namespace) -> None:
+
     from .predict_msa import Predictor
+    
+    msa = parse_a3m(args.msa)
 
     pred = Predictor(model_dir=args.params, use_cpu=args.cpu)
-    pred.predict(args.msa, args.output, args.chain_a_length)
+    pred.predict(msa, args.chain_a_length)
+    print(msa.shape)
+    with args.output as f:
+        f.write(msa)
 
     return None
 

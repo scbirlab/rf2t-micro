@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
-from resnet import ResidualNetwork
+
+from .resnet import ResidualNetwork
 
 # predict distance map from pair features
 # based on simple 2D ResNet

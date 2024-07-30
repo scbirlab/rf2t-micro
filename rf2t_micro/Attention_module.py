@@ -1,9 +1,9 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from Transformer import _get_clones, EncoderLayer, Encoder, InterEncoderLayer, InterEncoder, SpecialEncoderLayer, SpecialEncoder
-import Transformer
-from resnet import ResidualNetwork
+
+from .Transformer import _get_clones, EncoderLayer, Encoder, InterEncoderLayer, InterEncoder, SpecialEncoderLayer, SpecialEncoder
+from .resnet import ResidualNetwork
 
 # Attention module based on AlphaFold2's idea written by Minkyung Baek
 #  - Iterative MSA feature extraction
