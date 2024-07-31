@@ -1,13 +1,18 @@
 """Code 2D-convolutional residual blocks and networks."""
 
+from typing import Iterable, Optional
+
 import torch
 from torch.nn import Conv2d, ELU, Dropout, InstanceNorm2d, Module, Sequential
 
 def _get_same_padding(kernel: int, dilation: int):
     return (kernel + (kernel - 1) * (dilation - 1) - 1) // 2
 
-# original resblock
+
 class ResBlock2D(Module):
+    """Original resblock.
+    
+    """
     def __init__(self, n_c, 
                  kernel: int = 3, 
                  dilation: int = 1, 
@@ -30,8 +35,10 @@ class ResBlock2D(Module):
         return self.final_activation(x + self.layer(x))
 
 
-# pre-activation bottleneck resblock
 class ResBlock2D_bottleneck(Module):
+    """Pre-activation bottleneck resblock.
+
+    """
     def __init__(self, n_c, 
                  kernel: int = 3, 
                  dilation: int = 1, 
