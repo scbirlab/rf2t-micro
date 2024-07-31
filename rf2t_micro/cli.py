@@ -9,18 +9,21 @@ from .parsers import parse_a3m
 
 __version__ = '0.0.1'
 
-@clicommand(message="Making RosettaFold-2track prediction with the following parameters.")
+@clicommand(message="Making RosettaFold-2track prediction with the following parameters")
 def _run_prediction(args: Namespace) -> None:
 
+    from pandas import DataFrame
     from .predict_msa import Predictor
     
     msa = parse_a3m(args.msa)
 
     pred = Predictor(model_dir=args.params, use_cpu=args.cpu)
-    pred.predict(msa, args.chain_a_length)
-    print(msa.shape)
-    with args.output as f:
-        f.write(msa)
+    prediction = pred.predict(msa, args.chain_a_length)
+    print(prediction.shape)
+    (DataFrame(prediction, 
+               index=range(prediction.shape[0]), 
+               columns=range(prediction.shape[1]))
+     .to_csv(args.output, sep="\t", index=False))
 
     return None
 

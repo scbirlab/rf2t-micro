@@ -13,29 +13,27 @@ from  torch import nn
 
 from .parsers import _A3M_ALPHABET
 from .TrunkModel  import TrunkModule
-
-script_dir = '/'.join(os.path.dirname(os.path.realpath(__file__)).split('/')[:-1])
-script_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)))
+from .weights import get_model_weights
 
 MODEL_PARAM = {
-        "n_module"     : 12,
-        "n_diff_module": 12,
-        "n_layer"      : 1,
-        "d_msa"        : 64,
-        "d_pair"       : 128,
-        "d_templ"      : 128,
-        "n_head_msa"   : 4,
-        "n_head_pair"  : 8,
-        "n_head_templ" : 4,
-        "d_hidden"     : 64,
-        "d_attn"       : 64,
-        "d_crd"        : 64,
-        "r_ff"         : 2,
-        "n_resblock"   : 1,
-        "p_drop"       : 0.1,
+        "n_module"        : 12,
+        "n_diff_module"   : 12,
+        "n_layer"         : 1,
+        "d_msa"           : 64,
+        "d_pair"          : 128,
+        "d_templ"         : 128,
+        "n_head_msa"      : 4,
+        "n_head_pair"     : 8,
+        "n_head_templ"    : 4,
+        "d_hidden"        : 64,
+        "d_attn"          : 64,
+        "d_crd"           : 64,
+        "r_ff"            : 2,
+        "n_resblock"      : 1,
+        "p_drop"          : 0.1,
         "performer_N_opts": {},
         "performer_L_opts": {}
-        }
+    }
 
 class Predictor():
 
@@ -47,9 +45,9 @@ class Predictor():
                  model_dir: Optional[str] = None, 
                  use_cpu: bool = False):
         if model_dir is None:
-            self.model_dir = f"{script_dir}/weights"
+            self.model_dir = get_model_weights()
         else:
-            self.model_dir = model_dir
+            self.model_dir = get_model_weights(model_dir)
         #
         # define model name
         self.model_name = "RF2t"
@@ -66,11 +64,11 @@ class Predictor():
             print ("ERROR: failed to load model")
             sys.exit()
 
-    def load_model(self, model_name: str):
-        chk_fn = f"{self.model_dir}/{model_name}.pt"
+    def load_model(self, model_name: str) -> bool:
+        chk_fn = os.path.join(self.model_dir, f"{model_name}.pt")
         if not os.path.exists(chk_fn):
             return False
-        checkpoint = torch.load(chk_fn, map_location=self.device)
+        checkpoint = torch.load(chk_fn, map_location=self.device, weights_only=False)
         self.model.load_state_dict(checkpoint['model_state_dict'], strict=True)
         return True
     
