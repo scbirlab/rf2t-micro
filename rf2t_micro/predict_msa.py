@@ -35,7 +35,7 @@ MODEL_PARAM = {
         "performer_L_opts": {}
     }
 
-class Predictor():
+class Predictor:
 
     """
     
@@ -43,7 +43,9 @@ class Predictor():
     
     def __init__(self, 
                  model_dir: Optional[str] = None, 
-                 use_cpu: bool = False):
+                 use_cpu: bool = False,
+                 return_logits: bool = False):
+        self.return_logits = return_logits
         if model_dir is None:
             self.model_dir = get_model_weights()
         else:
@@ -65,10 +67,10 @@ class Predictor():
             sys.exit()
 
     def load_model(self, model_name: str) -> bool:
-        chk_fn = os.path.join(self.model_dir, f"{model_name}.pt")
-        if not os.path.exists(chk_fn):
+        weights_filename = os.path.join(self.model_dir, f"{model_name}.pt")
+        if not os.path.exists(weights_filename):
             return False
-        checkpoint = torch.load(chk_fn, map_location=self.device, weights_only=False)
+        checkpoint = torch.load(weights_filename, map_location=self.device, weights_only=False)
         self.model.load_state_dict(checkpoint['model_state_dict'], strict=True)
         return True
     
@@ -76,22 +78,23 @@ class Predictor():
                 msa: np.ndarray, 
                 chain_a_length: int) -> np.ndarray:
 
-        # msa = parse_a3m(paired_msa_file)
         n_rows, n_cols = msa.shape
-       
         self.model.eval()
         with torch.no_grad():
             msa = torch.tensor(msa[:10_000],  # take only first 10k rows 
                                device=self.device).long().unsqueeze(0)
             idx_pdb = torch.arange(n_cols, device=self.device).long().unsqueeze(0)
             idx_pdb[:,chain_a_length:] += 200 
-            seq = msa[:,0]
+            seq = msa[:,0]  # first column?
             #
             logit_s, _ = self.model(msa, seq, idx_pdb)
             
             # distogram
-            prob = self.active_fn(logit_s[0])
-            prob = prob.permute(0,2,3,1).cpu().detach().numpy()
+            if not self.return_logits:
+                prob = self.active_fn(logit_s[0])
+            else:
+                prob = logit_s[0]
+            prob = prob.permute(0,2,3,1).detach().numpy()
             # interchain contact prob
         prob = np.sum(prob.reshape(n_cols,n_cols,-1)[:chain_a_length,chain_a_length:,:(len(_A3M_ALPHABET) - 1)], 
                       axis=-1)
