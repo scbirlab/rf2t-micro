@@ -54,9 +54,10 @@ class Predictor:
         # define model name
         self.model_name = "RF2t"
         if torch.cuda.is_available() and (not use_cpu):
-            self.device = torch.device("cuda")
+            self.device_type = 'cuda'
         else:
-            self.device = torch.device("cpu")
+            self.device_type = 'cpu'
+        self.device = torch.device(self.device_type)
         self.active_fn = nn.Softmax(dim=1)
 
         # define model & load model
@@ -73,29 +74,51 @@ class Predictor:
         checkpoint = torch.load(weights_filename, map_location=self.device, weights_only=False)
         self.model.load_state_dict(checkpoint['model_state_dict'], strict=True)
         return True
+
+    def to(self, device_type, *args):
+        self.device_type = device_type
+        self.device = torch.device(self.device_type)
+        self.model.to(self.device)
+        for arg in args:
+            arg.to(self.device)
+        return None
     
     def predict(self, 
                 msa: np.ndarray, 
-                chain_a_length: int) -> np.ndarray:
+                chain_a_length: int,
+                max_msa_depth: int = 10_000) -> np.ndarray:
 
         n_rows, n_cols = msa.shape
         self.model.eval()
-        with torch.no_grad():
-            msa = torch.tensor(msa[:10_000],  # take only first 10k rows 
-                               device=self.device).long().unsqueeze(0)
-            idx_pdb = torch.arange(n_cols, device=self.device).long().unsqueeze(0)
-            idx_pdb[:,chain_a_length:] += 200 
-            seq = msa[:,0]  # first column?
-            #
-            logit_s, _ = self.model(msa, seq, idx_pdb)
-            
-            # distogram
-            if not self.return_logits:
-                prob = self.active_fn(logit_s[0])
-            else:
-                prob = logit_s[0]
-            prob = prob.permute(0,2,3,1).detach().numpy()
-            # interchain contact prob
-        prob = np.sum(prob.reshape(n_cols,n_cols,-1)[:chain_a_length,chain_a_length:,:(len(_A3M_ALPHABET) - 1)], 
-                      axis=-1)
-        return prob
+        try:
+            with torch.no_grad():
+                msa_tensor = torch.tensor(msa[:max_msa_depth],  # take only first 10k rows 
+                                          device=self.device).long().unsqueeze(0)
+                idx_pdb = torch.arange(n_cols, device=self.device).long().unsqueeze(0)
+                idx_pdb[:,chain_a_length:] += 200
+                try:
+                    seq = msa_tensor[:,0]  # first column?
+                except IndexError as e:
+                    print(msa)
+                    print(msa_tensor)
+                    print(max_msa_depth)
+                    raise e
+
+                # with torch.autocast(device_type=self.device_type):
+                logit_s, cα_coords = self.model(msa_tensor, seq, idx_pdb)
+                
+                # distogram
+                if not self.return_logits:
+                    prob = self.active_fn(logit_s[0])
+                else:
+                    prob = logit_s[0]
+                prob = prob.permute(0, 2, 3, 1)
+                # residue contact prob
+                prob = prob.reshape(n_cols, n_cols, -1)[...,:(len(_A3M_ALPHABET) - 1)]
+                prob = prob.sum(dim=-1).detach().cpu().numpy()
+        except torch.OutOfMemoryError:
+            self.to('cpu')
+            return self.predict(msa, chain_a_length, max_msa_depth=max_msa_depth)
+        else:
+            return prob, cα_coords
+        
