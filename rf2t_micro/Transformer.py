@@ -126,7 +126,7 @@ class InterEncoderLayer(nn.Module):
         tgt2 = self.attn(tgt2, src, src) # projection to query, key, value are done in MultiheadAttention module
         tgt = tgt + self.dropout1(tgt2)
 
-        G# feed-forward
+        # feed-forward
         tgt2 = self.norm2(tgt)
         tgt2 = self.linear2(self.dropout(F.relu_(self.linear1(tgt2))))
         tgt = tgt + self.dropout2(tgt2)
