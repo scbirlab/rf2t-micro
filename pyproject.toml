@@ -28,9 +28,10 @@ classifiers = [
 ]
 
 dependencies = [ 
+  "carabiner-tools[mpl]",
   "torch",
   "torchvision",
-  "carabiner-tools[mpl]",
+  "requests",
   "tqdm"
 ]
 
