@@ -64,7 +64,7 @@ def main() -> None:
 
     app = CLIApp("rf2t-micro",
                  version=__version__,
-                 description="Screening protein-protein interactions using DCA and AlphaFold2.",
+                 description="Make RosettaFold-2track predictions on paired MSAs.",
                  commands=[run_single])
 
     app.run()

@@ -11,8 +11,7 @@ from tqdm.auto import tqdm
 
 _WEIGHTS_URL = "https://files.ipd.uw.edu/pub/RoseTTAFold/weights.tar.gz"
 
-def get_model_weights(path: Optional[str] = None,
-                      files_to_keep: Iterable[str] = ("RF2t.pt", "Rosetta-DL_LICENSE.txt")):
+def get_model_weights(path: Optional[str] = None) -> str:
 
     """Get the model weights filename.
     
@@ -23,6 +22,8 @@ def get_model_weights(path: Optional[str] = None,
         path = os.path.expanduser("~")
     weight_dir = os.path.join(os.path.realpath(path), ".weights", "rf2t-micro")
     weight_filename = os.path.join(weight_dir, "RF2t.pt")
+    files_to_keep = (os.path.basename(weight_filename), "Rosetta-DL_LICENSE.txt")
+
     if not os.path.exists(weight_filename):
         print_err(f"Weights file {weight_filename} does not exist. Downloading...")
         if not os.path.exists(weight_dir):

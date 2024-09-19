@@ -54,11 +54,6 @@ class Predictor:
     -------
     Predictor
         An object which can make predictions on paired MSA objects.
-
-    Examples
-    --------
-    >>> predictor = Predictor(use_cpu=True)
-    >>> predictor = Predictor(return_logits=True)
     
     """
     
