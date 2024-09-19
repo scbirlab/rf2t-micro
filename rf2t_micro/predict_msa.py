@@ -8,6 +8,7 @@ import sys
 import time
 
 import numpy as np
+from numpy.typing import ArrayLike
 import torch
 from  torch import nn
 
@@ -37,7 +38,27 @@ MODEL_PARAM = {
 
 class Predictor:
 
-    """
+    """Class to contain model weights and make predictions on supplied paired MSAs.
+
+    Parameters
+    ----------
+    use_cpu : bool, optional
+        Whether to force CPU usage. Default: use GPU if available.
+    return_logits : bool, optional
+        Whether to return values from `(–inf,inf)` or sigmoid-transformed to `(–1, 1)`.
+        Default: `False`, return sigmoid-transformed.
+    model_dir : str, Optional
+        Directory containing model weights in filename `"RF2t.pt"`.
+    
+    Returns
+    -------
+    Predictor
+        An object which can make predictions on paired MSA objects.
+
+    Examples
+    --------
+    >>> predictor = Predictor(use_cpu=True)
+    >>> predictor = Predictor(return_logits=True)
     
     """
     
@@ -75,7 +96,7 @@ class Predictor:
         self.model.load_state_dict(checkpoint['model_state_dict'], strict=True)
         return True
 
-    def to(self, device_type, *args):
+    def to(self, device_type: str, *args):
         self.device_type = device_type
         self.device = torch.device(self.device_type)
         self.model.to(self.device)
@@ -84,7 +105,7 @@ class Predictor:
         return None
     
     def predict(self, 
-                msa: np.ndarray, 
+                msa: ArrayLike, 
                 chain_a_length: int,
                 max_msa_depth: int = 10_000) -> np.ndarray:
 
