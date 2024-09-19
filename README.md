@@ -41,7 +41,7 @@ You can ask for visualisations of the residue interaction matrix by specifying `
 
 ## ... if you want larger scale and unpaired MSAs
 
-The `rf2t-micro` package was made primarily to be a lightweight dependency of a portable `pip`-installable protein-protein interaction screening tool called [`yunta`](https://github.com/scbirlab/yunta), which in turn could be used in our [`nf-ggi` Nextflow pipleline](https://github.com/scbirlab/nf-ggi) so that HPC clusters could be conveniently used to screen for protein-protein interactions at scale. 
+The `rf2t-micro` package was made primarily to be a lightweight dependency of a portable `pip`-installable protein-protein interaction screening tool called [`yunta`](https://github.com/scbirlab/yunta), which in turn could be used in our [`nf-ggi` Nextflow pipeline](https://github.com/scbirlab/nf-ggi) so that HPC clusters could be conveniently used to screen for protein-protein interactions at scale. 
 
 [`yunta`](https://github.com/scbirlab/yunta) provides a command-line interface and Python API for predicting protein-protein interactions using GPU-accelerated direct coupling analysis (DCA), RoseTTAFold-2track, and structures usign AlphaFold2 from unpaired MSAs. 
 
