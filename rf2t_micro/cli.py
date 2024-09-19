@@ -3,6 +3,7 @@
 import sys
 
 from argparse import ArgumentParser, FileType, Namespace
+from carabiner import print_err
 from carabiner.cliutils import clicommand, CLIOption, CLICommand, CLIApp
 
 from .parsers import parse_a3m
@@ -18,11 +19,12 @@ def _run_prediction(args: Namespace) -> None:
     msa = parse_a3m(args.msa)
 
     pred = Predictor(model_dir=args.params, use_cpu=args.cpu)
-    prediction = pred.predict(msa, args.chain_a_length)
-    print(prediction.shape)
+    prediction, cα_coords = pred.predict(msa, args.chain_a_length)
+    print_err(prediction.shape)
+    columns = [f"A_{i + 1}" for i in range(args.chain_a_length)] + [f"B_{i + 1}" for i in range(msa.shape[-1] - args.chain_a_length)]
     (DataFrame(prediction, 
                index=range(prediction.shape[0]), 
-               columns=range(prediction.shape[1]))
+               columns=columns)
      .to_csv(args.output, sep="\t", index=False))
 
     return None
