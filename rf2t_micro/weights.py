@@ -44,7 +44,7 @@ def get_model_weights(path: Optional[str] = None,
             print_err(f"Extracting weights from {temp_file} to {weight_dir}...")
             tar.extractall(path=weight_dir, members=files_to_keep, filter='data')
         tardir = os.path.join(weight_dir, "weights")
-        os.remove(tempfile)
+        os.remove(temp_file)
         for filename in files_to_keep:
             source = os.path.join(tardir, filename)
             destination = os.path.join(weight_dir, filename)
