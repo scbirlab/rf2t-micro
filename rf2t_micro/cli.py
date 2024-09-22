@@ -8,7 +8,7 @@ from carabiner.cliutils import clicommand, CLIOption, CLICommand, CLIApp
 
 from .parsers import parse_a3m
 
-__version__ = '0.0.1'
+__version__ = '0.0.1.post1'
 
 @clicommand(message="Making RosettaFold-2track prediction with the following parameters")
 def _run_prediction(args: Namespace) -> None:
